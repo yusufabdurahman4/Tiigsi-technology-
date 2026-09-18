@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiigsi Admin Dashboard</title><link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-body">
+<div id="loginBox" class="login-box">
+  <div class="brand center"><span class="logo">T</span><div><b>TIIGSI</b><small>ADMIN</small></div></div>
+  <h2>Admin Login</h2><p>Geli xogta maamulka si aad u aragto diiwaangelinta.</p>
+  <input id="adminUser" placeholder="Username" value="admin">
+  <input id="adminPass" type="password" placeholder="Password">
+  <button class="btn" onclick="login()">Gal Dashboard</button>
+  <div id="loginError" class="error"></div>
+  <small>Demo: username <b>admin</b>, password <b>tiigsi2026</b>. Beddel marka aad production gelinayso.</small>
+</div>
+
+<div id="dashboard" class="hidden">
+<header class="topbar"><div class="container nav"><div class="brand"><span class="logo">T</span><div><b>TIIGSI</b><small>ADMIN DASHBOARD</small></div></div><button class="btn btn-small" onclick="logout()">Ka bax</button></div></header>
+<div class="container dashboard">
+  <div class="dash-head"><div><span class="eyebrow">ADMIN</span><h1>Diiwaangelinta Ardayda</h1></div><button class="btn ghost" onclick="exportCSV()">⬇ Export CSV</button></div>
+  <div class="stat-grid"><div class="stat"><span>👥</span><b id="total">0</b><small>Dhammaan</small></div><div class="stat"><span>🆕</span><b id="newCount">0</b><small>New</small></div><div class="stat"><span>✅</span><b id="approved">0</b><small>Approved</small></div><div class="stat"><span>⏳</span><b id="pending">0</b><small>Pending</small></div></div>
+  <div class="toolbar"><input id="search" placeholder="🔎 Raadi magaca, telefoonka ama koorsada..." oninput="renderTable()"><select id="filter" onchange="renderTable()"><option value="">Koorsooyinka oo dhan</option></select></div>
+  <div class="table-wrap"><table><thead><tr><th>#</th><th>Magac</th><th>Phone</th><th>Course</th><th>Magaalo</th><th>Taariikh</th><th>Status</th><th>Action</th></tr></thead><tbody id="tbody"></tbody></table></div>
+</div>
+</div>
+<script>
+const COURSES=["Basic Computer Application","IT Fundamentals & Troubleshooting","Graphic Design Masterclass","Video Editing Masterclass","CCTV Camera Training Course","Data Analysis with Excel"];
+function login(){if(document.getElementById('adminUser').value==='admin'&&document.getElementById('adminPass').value==='tiigsi2026'){sessionStorage.admin='1';showDash()}else document.getElementById('loginError').textContent='Username ama password waa khalad.'}
+function showDash(){loginBox.classList.add('hidden');dashboard.classList.remove('hidden');filter.innerHTML='<option value="">Koorsooyinka oo dhan</option>'+COURSES.map(c=>`<option>${c}</option>`).join('');renderTable()}
+function logout(){sessionStorage.removeItem('admin');location.reload()}
+function data(){return JSON.parse(localStorage.getItem('tiigsiRegistrations')||'[]')}
+function renderTable(){let d=data(), q=search.value.toLowerCase(), f=filter.value; d=d.filter(x=>(!q||[x.name,x.phone,x.course,x.city].join(' ').toLowerCase().includes(q))&&(!f||x.course===f)); total.textContent=data().length;newCount.textContent=data().filter(x=>x.status==='New').length;approved.textContent=data().filter(x=>x.status==='Approved').length;pending.textContent=data().filter(x=>x.status==='Pending').length;tbody.innerHTML=d.map((x,i)=>`<tr><td>${i+1}</td><td><b>${esc(x.name)}</b><small>${esc(x.email||'')}</small></td><td>${esc(x.phone)}</td><td>${esc(x.course)}</td><td>${esc(x.city)}</td><td>${new Date(x.date).toLocaleDateString()}</td><td><select onchange="status('${x.id}',this.value)"><option ${x.status==='New'?'selected':''}>New</option><option ${x.status==='Pending'?'selected':''}>Pending</option><option ${x.status==='Approved'?'selected':''}>Approved</option><option ${x.status==='Rejected'?'selected':''}>Rejected</option></select></td><td><button class="iconbtn" onclick="view('${x.id}')">👁️</button><button class="iconbtn danger" onclick="del('${x.id}')">🗑️</button></td></tr>`).join('')||'<tr><td colspan="8" class="empty">Weli lama helin diiwaangelin.</td></tr>'}
+function status(id,s){let d=data();let x=d.find(a=>a.id===id);if(x){x.status=s;localStorage.setItem('tiigsiRegistrations',JSON.stringify(d));renderTable()}}
+function view(id){let x=data().find(a=>a.id===id);alert(`XOGTA ARDAYGA\\n\\nMagac: ${x.name}\\nPhone: ${x.phone}\\nEmail: ${x.email||'-'}\\nDa: ${x.age}\\nJinsi: ${x.gender}\\nMagaalo: ${x.city}\\nKoorsada: ${x.course}\\nFariin: ${x.message||'-'}\\nTaariikh: ${new Date(x.date).toLocaleString()}`)}
+function del(id){if(confirm('Ma hubtaa inaad tirtirayso diiwaangelintan?')){localStorage.setItem('tiigsiRegistrations',JSON.stringify(data().filter(x=>x.id!==id)));renderTable()}}
+function exportCSV(){let d=data();let rows=[['Name','Phone','Email','Age','Gender','City','Course','Status','Date','Message'],...d.map(x=>[x.name,x.phone,x.email,x.age,x.gender,x.city,x.course,x.status,x.date,x.message])];let csv=rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='tiigsi-registrations.csv';a.click()}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+if(sessionStorage.admin==='1')showDash();
+</script>
+</body></html>
